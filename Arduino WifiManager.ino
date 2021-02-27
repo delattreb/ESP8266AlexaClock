@@ -3,6 +3,7 @@
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <config.h>
+#include "lib/WS2812FX.h"
 
 WiFiClient wifiClient;
 WiFiUDP ntpUDP;
@@ -12,9 +13,7 @@ const int CHAR = 48;
 static unsigned long previousMillis = 0;
 unsigned long currentMillis;
 
-//
 // setup
-//
 void setup()
 {
 	Serial.begin(SERIALBAUDS);
@@ -32,7 +31,6 @@ void setup()
 	WiFiManager wifiManager;
 	//Reset setting
 	//wifiManager.resetSettings();
-
 	wifiManager.setAPStaticIPConfig(IPAddress(10, 0, 0, 1), IPAddress(10, 0, 0, 1), IPAddress(255, 255, 255, 0));
 #ifdef WIFIDEBUG
 	wifiManager.setDebugOutput(true);
@@ -49,13 +47,10 @@ void setup()
 		ESP.reset();
 		delay(5000);
 	}
-	// Démarrage du client NTP - Start NTP client
-	timeClient.begin();
+	timeClient.begin(); // Démarrage du client NTP - Start NTP client
 }
 
-//
 // loop
-//
 void loop()
 {
 	currentMillis = millis();
