@@ -12,9 +12,12 @@ NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
 WS2812FX ws2812fx60 = WS2812FX(LED_COUNT_60, LED_PIN_60, NEO_RGB + NEO_KHZ800);
 
 static int bright = 50;
+int second_lightd, second_lighti;
 static unsigned long pMlis = 0;
 unsigned long cMlis;
 uint8_t second;
+int cpt = 0;
+
 // setup
 void setup()
 {
@@ -56,22 +59,49 @@ void setup()
 	ws2812fx60.setBrightness(bright);
 	ws2812fx60.start();
 	ws2812fx60.stop();
+
+	second_lightd = 255;
+	second_lighti = 0;
+	timeClient.update();
+	second = uint8_t(timeClient.getSeconds());
 }
 
 // loop
 void loop()
 {
+	ws2812fx60.setPixelColor(second, 0, 0, second_lightd);
+	if (second == 59)
+		ws2812fx60.setPixelColor(0, 0, 0, second_lighti); //Warning Cas du 59
+	else
+		ws2812fx60.setPixelColor(second + 1, 0, 0, second_lighti); //Warning Cas du 59
+	ws2812fx60.show();
+	
+	if (millis() % 2 == 0)
+	{
+		second_lightd -= 2;
+		second_lighti += 2;
+	}
+	if (second_lightd <= 0)
+		second_lightd = 0;
+	if (second_lighti >= 255)
+		second_lighti = 255;
 
+	timeClient.update();
+	if (uint8_t(timeClient.getSeconds() != second))
+	{
+		second = uint8_t(timeClient.getSeconds());
+		second_lightd = 255;
+		second_lighti = 0;
+	}
+
+#ifdef DEBUG
 	cMlis = millis();
 	if (cMlis - pMlis >= ATTENPTING)
 	{
 		pMlis = cMlis;
-		timeClient.update();
-		Serial.println(timeClient.getSeconds());
-
-		ws2812fx60.setPixelColor(second, 0, 0, 0);
-		second = uint8_t(timeClient.getSeconds());
-		ws2812fx60.setPixelColor(second, 0, 0, 255);
-		ws2812fx60.show();
+		Serial.println(cpt);
+		cpt = 0;
 	}
+	cpt++;
+#endif
 }
