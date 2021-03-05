@@ -16,7 +16,7 @@ int second_lightd, second_lighti;
 static unsigned long pMlis = 0;
 unsigned long cMlis;
 uint8_t second;
-int cpt = 0;
+int cTable[60][3];
 
 // setup
 void setup()
@@ -69,22 +69,8 @@ void setup()
 // loop
 void loop()
 {
-	ws2812fx60.setPixelColor(second, 0, 0, second_lightd);
-	if (second == 59)
-		ws2812fx60.setPixelColor(0, 0, 0, second_lighti); //Warning Cas du 59
-	else
-		ws2812fx60.setPixelColor(second + 1, 0, 0, second_lighti); //Warning Cas du 59
+	ws2812fx60.setPixelColor(second, cTable[second][0], cTable[second][1], cTable[second][2]);
 	ws2812fx60.show();
-	
-	if (millis() % 2 == 0)
-	{
-		second_lightd -= 2;
-		second_lighti += 2;
-	}
-	if (second_lightd <= 0)
-		second_lightd = 0;
-	if (second_lighti >= 255)
-		second_lighti = 255;
 
 	timeClient.update();
 	if (uint8_t(timeClient.getSeconds() != second))
@@ -93,15 +79,4 @@ void loop()
 		second_lightd = 255;
 		second_lighti = 0;
 	}
-
-#ifdef DEBUG
-	cMlis = millis();
-	if (cMlis - pMlis >= ATTENPTING)
-	{
-		pMlis = cMlis;
-		Serial.println(cpt);
-		cpt = 0;
-	}
-	cpt++;
-#endif
 }
