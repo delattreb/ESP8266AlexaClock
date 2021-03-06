@@ -18,6 +18,8 @@ WS2812FX ws2812fx60 = WS2812FX(LED_COUNT_60, LED_PIN_60, NEO_GRB + NEO_KHZ800);
 bool bbright, bseconde;
 int cpt_animation, bright;
 int hour, minute, seconde;
+int coefh = LED_COUNT_60 / HOUR;
+float coefm = (float)coefh/(float)LED_COUNT_60;
 uint32_t seconde_color = CYAN, minute_color = BLUE, hour_color = ORANGE;
 #pragma endregion
 
@@ -91,8 +93,8 @@ void setup()
 
 	//Get time
 	timeClient.update();
-	hour = round((uint8_t(timeClient.getHours() % 12) * LED_COUNT_60) / 12);
 	minute = uint8_t(timeClient.getMinutes());
+	hour = round(timeClient.getHours() % 12 * coefh + minute * coefm);
 	seconde = uint8_t(timeClient.getSeconds());
 
 	ws2812fx60.setPixelColor(seconde, seconde_color);
@@ -117,17 +119,14 @@ void loop()
 
 	//Check time
 	timeClient.update();
-	if (timeClient.getHours() != hour)
-	{
-		ws2812fx60.setPixelColor(hour, 0, 0, 0);
-		hour = round((uint8_t(timeClient.getHours() % 12) * LED_COUNT_60) / 12);
-	}
 	if (timeClient.getMinutes() != minute)
 	{
+		ws2812fx60.setPixelColor(hour, 0, 0, 0);
 		ws2812fx60.setPixelColor(minute, 0, 0, 0);
 		minute = timeClient.getMinutes();
 		if (bseconde)
 			animation();
+		hour = round(timeClient.getHours() % 12 * coefh + minute * coefm);
 	}
 	if (timeClient.getSeconds() != seconde)
 	{
