@@ -5,7 +5,7 @@
 
 // Serial configuration
 #define SERIALBAUDS 9600
-
+#define HOUR 12
 //ESP8266 configuration
 #define NETWORKNAME "ESPClock"
 #define ATTENPTING 1000
