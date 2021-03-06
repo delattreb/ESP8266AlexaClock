@@ -2,21 +2,22 @@
 #include <WiFiManager.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
+#include <GyverButton.h>
 #include "config.h"
 #include "WS2812FX.h"
 
 WiFiClient wifiClient;
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
+GButton touch(PIN_BUTTON_1, LOW_PULL, NORM_OPEN);
 WS2812FX ws2812fx24 = WS2812FX(LED_COUNT_24, LED_PIN_24, NEO_GRB + NEO_KHZ800);
 WS2812FX ws2812fx60 = WS2812FX(LED_COUNT_60, LED_PIN_60, NEO_GRB + NEO_KHZ800);
 
 #pragma region TIME
+bool bbright;
+int cpt_animation, bright;
 int hour, minute, seconde;
-int cpthour, cptminute, cptseconde;
-bool bhourup, bminuteup, bsecondeup;
-bool bhourdown, bminutedown, bsecondedown;
-bool bnewhour, bnewminute, bnewseconde;
+uint32_t seconde_color = BLUE, minute_color = CYAN, hour_color = ORANGE;
 #pragma endregion
 
 // setup
@@ -53,19 +54,26 @@ void setup()
 		ESP.reset();
 		delay(5000);
 	}
+	//Input configuration
+	pinMode(PIN_BUTTON_1, INPUT_PULLUP);
+	attachInterrupt(digitalPinToInterrupt(PIN_BUTTON_1), pinDidChange, CHANGE);
+	touch.setDebounce(80);
+	touch.setTimeout(300);
+	bbright = false;
+	bright = BRIGHTNESS;
+
 	timeClient.begin(); // Démarrage du client NTP - Start NTP client
 
-	//ws2812init
 	ws2812fx60.init();
-	ws2812fx60.setBrightness(BRIGHTNESS_60);
+	ws2812fx60.setBrightness(bright);
 	ws2812fx60.stop();
 
 	ws2812fx24.init();
-	ws2812fx24.setBrightness(BRIGHTNESS_24);
+	ws2812fx24.setBrightness(bright);
 	ws2812fx24.setMode(FX_MODE_COMET);
 	ws2812fx24.setSpeed(SPEED_EFFECT);
 	ws2812fx24.setColor(ORANGE);
-	ws2812fx24.start();
+	ws2812fx24.stop();
 
 	//Get time
 	timeClient.update();
@@ -73,20 +81,23 @@ void setup()
 	minute = uint8_t(timeClient.getMinutes());
 	seconde = uint8_t(timeClient.getSeconds());
 
-	ws2812fx60.setPixelColor(seconde, BLUE);
-	ws2812fx60.setPixelColor(hour, ORANGE);
-	ws2812fx60.setPixelColor(minute, CYAN);
+	ws2812fx60.setPixelColor(seconde, seconde_color);
+	ws2812fx60.setPixelColor(hour, hour_color);
+	ws2812fx60.setPixelColor(minute, minute_color);
 	ws2812fx60.show();
 }
 
 // loop
 void loop()
 {
+	touch.tick();
 	ws2812fx24.service();
 
-	ws2812fx60.setPixelColor(seconde, BLUE);
-	ws2812fx60.setPixelColor(hour, ORANGE);
-	ws2812fx60.setPixelColor(minute, CYAN);
+	ws2812fx60.setPixelColor(seconde, seconde_color);
+	ws2812fx60.setPixelColor(hour, hour_color);
+	ws2812fx60.setPixelColor(minute, minute_color);
+	ws2812fx24.setBrightness(bright);
+	ws2812fx60.setBrightness(bright);
 	ws2812fx60.show();
 
 	//Check time
@@ -100,10 +111,50 @@ void loop()
 	{
 		ws2812fx60.setPixelColor(minute, 0, 0, 0);
 		minute = timeClient.getMinutes();
+		//Animation
+		ws2812fx24.start();
+		cpt_animation = 0;
 	}
 	if (timeClient.getSeconds() != seconde)
 	{
 		ws2812fx60.setPixelColor(seconde, 0, 0, 0);
 		seconde = timeClient.getSeconds();
+		if (cpt_animation <= ANIMATION)
+			cpt_animation++;
+		else
+			ws2812fx24.stop();
 	}
+
+	//Button gesture
+	touch.tick();
+	if (touch.isStep())
+	{
+		if (bbright)
+		{
+			if (bright + INCREMENT < 255)
+				bright = bright + INCREMENT;
+		}
+		else
+		{
+			if (bright - INCREMENT > 5)
+				bright = bright - INCREMENT;
+		}
+#ifdef DEBUG
+		Serial.print("bright: ");
+		Serial.println(bright);
+#endif
+	}
+	if (touch.isRelease())
+	{
+		bbright = !bbright;
+#ifdef DEBUG
+		Serial.println("Change");
+#endif
+	}
+}
+
+//pinDidChange
+ICACHE_RAM_ATTR void pinDidChange()
+{
+	touch.tick();
 }
