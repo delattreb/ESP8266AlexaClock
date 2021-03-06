@@ -1,6 +1,6 @@
 //DEBUG INFORMATION
 //#define INFO
-#define DEBUG
+//#define DEBUG
 //#define WIFIDEBUG
 
 // Serial configuration
@@ -10,6 +10,7 @@
 #define NETWORKNAME "ESPClock"
 #define ATTENPTING 1000
 
+//Led configuration
 #pragma region LED_CONFIGURATION
 #define LED_PIN_24 5 
 #define LED_PIN_60 4 
@@ -24,3 +25,8 @@
 #define INCREMENT 10
 #pragma endregion
 
+
+#pragma region SAVE_DATA
+#define EEPROM_SIZE 1
+#define EEPROM_PLACE_BRIGHT 0
+#pragma endregion 

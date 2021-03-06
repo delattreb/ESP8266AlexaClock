@@ -3,6 +3,7 @@
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <GyverButton.h>
+#include <EEPROM.h>
 #include "config.h"
 #include "WS2812FX.h"
 
@@ -14,10 +15,10 @@ WS2812FX ws2812fx24 = WS2812FX(LED_COUNT_24, LED_PIN_24, NEO_GRB + NEO_KHZ800);
 WS2812FX ws2812fx60 = WS2812FX(LED_COUNT_60, LED_PIN_60, NEO_GRB + NEO_KHZ800);
 
 #pragma region TIME
-bool bbright;
+bool bbright, bseconde;
 int cpt_animation, bright;
 int hour, minute, seconde;
-uint32_t seconde_color = BLUE, minute_color = CYAN, hour_color = ORANGE;
+uint32_t seconde_color = CYAN, minute_color = BLUE, hour_color = ORANGE;
 #pragma endregion
 
 // setup
@@ -54,13 +55,26 @@ void setup()
 		ESP.reset();
 		delay(5000);
 	}
+	// initialize EEPROM with predefined size
+	EEPROM.begin(EEPROM_SIZE);
+
 	//Input configuration
 	pinMode(PIN_BUTTON_1, INPUT_PULLUP);
 	attachInterrupt(digitalPinToInterrupt(PIN_BUTTON_1), pinDidChange, CHANGE);
 	touch.setDebounce(80);
-	touch.setTimeout(300);
+	touch.setTimeout(200);
 	bbright = false;
-	bright = BRIGHTNESS;
+	bseconde = true;
+	if (EEPROM.read(EEPROM_PLACE_BRIGHT) >= 10)
+	{
+		bright = EEPROM.read(EEPROM_PLACE_BRIGHT);
+#ifdef DEBUG
+		Serial.print("Load EEPROM: ");
+		Serial.println(bright);
+#endif
+	}
+	else
+		bright = BRIGHTNESS;
 
 	timeClient.begin(); // Démarrage du client NTP - Start NTP client
 
@@ -93,7 +107,8 @@ void loop()
 	touch.tick();
 	ws2812fx24.service();
 
-	ws2812fx60.setPixelColor(seconde, seconde_color);
+	if (bseconde)
+		ws2812fx60.setPixelColor(seconde, seconde_color);
 	ws2812fx60.setPixelColor(hour, hour_color);
 	ws2812fx60.setPixelColor(minute, minute_color);
 	ws2812fx24.setBrightness(bright);
@@ -111,9 +126,8 @@ void loop()
 	{
 		ws2812fx60.setPixelColor(minute, 0, 0, 0);
 		minute = timeClient.getMinutes();
-		//Animation
-		ws2812fx24.start();
-		cpt_animation = 0;
+		if (bseconde)
+			animation();
 	}
 	if (timeClient.getSeconds() != seconde)
 	{
@@ -127,6 +141,20 @@ void loop()
 
 	//Button gesture
 	touch.tick();
+	if (touch.isTriple())
+	{
+#ifdef DEBUG
+		Serial.print("Save EEPROM: ");
+		Serial.println(bright);
+#endif
+		EEPROM.write(EEPROM_PLACE_BRIGHT, bright);
+		EEPROM.commit();
+		animation();
+	}
+	if (touch.isDouble())
+	{
+		bseconde = !bseconde;
+	}
 	if (touch.isStep())
 	{
 		if (bbright)
@@ -151,6 +179,13 @@ void loop()
 		Serial.println("Change");
 #endif
 	}
+}
+
+//Animation
+void animation()
+{
+	ws2812fx24.start();
+	cpt_animation = 0;
 }
 
 //pinDidChange
