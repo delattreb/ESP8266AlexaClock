@@ -9,7 +9,7 @@
 
 WiFiClient wifiClient;
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
+NTPClient timeClient(ntpUDP, NTP_URL, NTP_DECALLAGE, NTP_MAJ);
 GButton touch(PIN_BUTTON_1, LOW_PULL, NORM_OPEN);
 WS2812FX ws2812fx24 = WS2812FX(LED_COUNT_24, LED_PIN_24, NEO_GRB + NEO_KHZ800);
 WS2812FX ws2812fx60 = WS2812FX(LED_COUNT_60, LED_PIN_60, NEO_GRB + NEO_KHZ800);
@@ -19,16 +19,18 @@ bool bbright, bseconde;
 int cpt_animation, bright;
 int hour, minute, seconde;
 int coefh = LED_COUNT_60 / HOUR;
-float coefm = (float)coefh/(float)LED_COUNT_60;
+float coefm = (float)coefh / (float)LED_COUNT_60;
 uint32_t seconde_color = CYAN, minute_color = BLUE, hour_color = ORANGE;
 #pragma endregion
 
 // setup
 void setup()
 {
+#ifdef SERIALLOG
 	Serial.begin(SERIALBAUDS);
 	while (!Serial)
 		continue;
+#endif
 #ifdef INFO
 	delay(5000);
 	Serial.print("Core version: ");

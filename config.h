@@ -1,4 +1,5 @@
 //DEBUG INFORMATION
+//#define SERIALLOG
 //#define INFO
 //#define DEBUG
 //#define WIFIDEBUG
@@ -9,6 +10,11 @@
 //ESP8266 configuration
 #define NETWORKNAME "ESPClock"
 #define ATTENPTING 1000
+
+//NTP
+#define NTP_DECALLAGE 3600 //GMT+1
+#define NTP_MAJ 60000 // 60s
+#define NTP_URL "europe.pool.ntp.org"
 
 //Led configuration
 #pragma region LED_CONFIGURATION
