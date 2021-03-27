@@ -8,10 +8,14 @@
 #define SERIALBAUDS 115200
 #define HOUR 12
 //ESP8266 configuration
-#define NETWORKNAME "ESPClock"
+#define NETWORKNAME "Horloge"
 #define ATTENPTING 1000
 #define DEBOUNCE 80
 #define TIMEOUT 200
+
+
+//Alexa
+#define DEVICE_NAME "Horloge"
 
 //NTP
 #define NTP_DECALLAGE 3600 //GMT+1
