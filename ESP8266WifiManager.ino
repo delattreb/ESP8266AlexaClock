@@ -5,6 +5,7 @@
 #include <GyverButton.h>
 #include <EEPROM.h>
 #include <Adafruit_NeoPixel.h>
+#include <Espalexa.h>
 #include "config.h"
 
 WiFiClient wifiClient;
@@ -13,14 +14,27 @@ NTPClient timeClient(ntpUDP, NTP_URL, NTP_DECALLAGE, NTP_MAJ);
 GButton touch(PIN_BUTTON_1, LOW_PULL, NORM_OPEN);
 Adafruit_NeoPixel pixels(LED_COUNT_60, LED_PIN_60, NEO_GRB + NEO_KHZ800);
 
+#pragma region ALEXA
+//callback functions
+void deltaChanged(EspalexaDevice *dev);
+Espalexa espalexa;
+EspalexaDevice *epsilon;
+#pragma endregion
+
 #pragma region TIME
 bool bbright, bseconde;
 int bright;
 int hour, minute, seconde;
 int coefh = LED_COUNT_60 / HOUR;
 float coefm = (float)coefh / (float)LED_COUNT_60;
-uint32_t seconde_color = pixels.Color(0, 0, 128), minute_color = pixels.Color(0, 255, 255), hour_color = pixels.Color(255, 48, 0);
 #pragma endregion
+
+#pragma region COLOR
+uint32_t seconde_color = pixels.Color(0, 0, 128);
+uint32_t minute_color = pixels.Color(0, 255, 255);
+uint32_t hour_color = pixels.Color(255, 48, 0);
+#pragma endregion
+
 
 // setup
 void setup()
@@ -95,6 +109,10 @@ void setup()
 	pixels.setPixelColor(seconde, seconde_color);
 	pixels.setBrightness(bright);
 	pixels.show();
+
+	// Define your devices here.
+	espalexa.addDevice(DEVICE_NAME, deltaChanged, EspalexaDeviceType::color);
+	espalexa.begin();
 }
 
 // loop
@@ -102,6 +120,10 @@ void loop()
 {
 	touch.tick();
 	timeClient.update();
+
+	//Alexa
+	espalexa.loop();
+	delay(1);
 
 	if (timeClient.getSeconds() != seconde)
 	{
@@ -185,4 +207,27 @@ void changews(int hour, int minute, int seconde, int bright)
 ICACHE_RAM_ATTR void pinDidChange()
 {
 	touch.tick();
+}
+
+//Callback
+void deltaChanged(EspalexaDevice *d)
+{
+	if (d == nullptr)
+		return;
+	if (d->getName() == DEVICE_NAME)
+	{
+		//Get color
+		bright = d->getValue();
+		seconde_color = pixels.Color(d->getR(), d->getG(), d->getB());
+#ifdef DEBUG
+		Serial.print("Value: ");
+		Serial.print(bright);
+		Serial.print(", color R");
+		Serial.print(red);
+		Serial.print(", G");
+		Serial.print(green);
+		Serial.print(", B");
+		Serial.println(blue);
+#endif
+	}
 }
