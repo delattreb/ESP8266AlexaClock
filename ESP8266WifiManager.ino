@@ -4,14 +4,14 @@
 #include <WiFiUdp.h>
 #include <GyverButton.h>
 #include <EEPROM.h>
+#include <Adafruit_NeoPixel.h>
 #include "config.h"
-#include "WS2812FX.h"
 
 WiFiClient wifiClient;
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, NTP_URL, NTP_DECALLAGE, NTP_MAJ);
 GButton touch(PIN_BUTTON_1, LOW_PULL, NORM_OPEN);
-WS2812FX ws2812fx60 = WS2812FX(LED_COUNT_60, LED_PIN_60, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel pixels(LED_COUNT_60, LED_PIN_60, NEO_GRB + NEO_KHZ800);
 
 #pragma region TIME
 bool bbright, bseconde;
@@ -19,7 +19,7 @@ int bright;
 int hour, minute, seconde;
 int coefh = LED_COUNT_60 / HOUR;
 float coefm = (float)coefh / (float)LED_COUNT_60;
-uint32_t seconde_color = CYAN, minute_color = BLUE, hour_color = ORANGE;
+uint32_t seconde_color = pixels.Color(0, 0, 128), minute_color = pixels.Color(0, 255, 255), hour_color = pixels.Color(255, 48, 0);
 #pragma endregion
 
 // setup
@@ -88,13 +88,13 @@ void setup()
 	hour = round(timeClient.getHours() % 12 * coefh + minute * coefm);
 	seconde = uint8_t(timeClient.getSeconds());
 
-	ws2812fx60.init();
-	ws2812fx60.setBrightness(bright);
-	ws2812fx60.stop();
-	ws2812fx60.setPixelColor(seconde, seconde_color);
-	ws2812fx60.setPixelColor(hour, hour_color);
-	ws2812fx60.setPixelColor(minute, minute_color);
-	ws2812fx60.show();
+	pixels.begin();
+	pixels.clear();
+	pixels.setPixelColor(hour, hour_color);
+	pixels.setPixelColor(minute, minute_color);
+	pixels.setPixelColor(seconde, seconde_color);
+	pixels.setBrightness(bright);
+	pixels.show();
 }
 
 // loop
@@ -102,15 +102,16 @@ void loop()
 {
 	touch.tick();
 	timeClient.update();
-	if (timeClient.getMinutes() != minute)
-	{
-		offws(hour);
-		offws(minute);
-		minute = timeClient.getMinutes();
-		hour = round(timeClient.getHours() % 12 * coefh + minute * coefm);
-	}
+
 	if (timeClient.getSeconds() != seconde)
 	{
+		if (timeClient.getMinutes() != minute)
+		{
+			offws(hour);
+			offws(minute);
+			minute = timeClient.getMinutes();
+			hour = round(timeClient.getHours() % 12 * coefh + minute * coefm);
+		}
 		offws(seconde);
 		seconde = timeClient.getSeconds();
 		changews(hour, minute, seconde, bright);
@@ -165,18 +166,19 @@ void loop()
 //Off Pixel
 void offws(int pixel)
 {
-	ws2812fx60.setPixelColor(pixel, 0, 0, 0);
+	pixels.setPixelColor(pixel, pixels.Color(0, 0, 0));
 }
 
 //Change on WS2812
 void changews(int hour, int minute, int seconde, int bright)
 {
-	ws2812fx60.setBrightness(bright);
+	pixels.setBrightness(bright);
 	if (bseconde)
-		ws2812fx60.setPixelColor(seconde, seconde_color);
-	ws2812fx60.setPixelColor(hour, hour_color);
-	ws2812fx60.setPixelColor(minute, minute_color);
-	ws2812fx60.show();
+		pixels.setPixelColor(seconde, seconde_color);
+	pixels.setPixelColor(hour, hour_color);
+	pixels.setPixelColor(minute, minute_color);
+
+	pixels.show();
 }
 
 //pinDidChange
