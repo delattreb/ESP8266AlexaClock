@@ -110,7 +110,7 @@ void setup()
 	Serial.print("Mois: ");
 	Serial.println(month);
 	Serial.print("Heure: ");
-	Serial.println(timeClient.getHours()+int(bsummer));
+	Serial.println(timeClient.getHours() + int(bsummer));
 	Serial.print("Ete: ");
 	Serial.println(bsummer);
 #endif
@@ -140,7 +140,7 @@ void loop()
 			offws(hour);
 			offws(minute);
 			minute = timeClient.getMinutes();
-			hour = round((timeClient.getHours()+int(bsummer)) % 12 * coefh + minute * coefm);
+			hour = round((timeClient.getHours() + int(bsummer)) % 12 * coefh + minute * coefm);
 		}
 		offws(seconde);
 		seconde = timeClient.getSeconds();
@@ -226,7 +226,12 @@ void deltaChanged(EspalexaDevice *d)
 	{
 		//Get color
 		bright = d->getValue();
-		seconde_color = pixels.Color(d->getR(), d->getG(), d->getB());
+		int r = d->getR();
+		int g = d->getG();
+		int b = d->getB();
+		hour_color = pixels.Color(r, g, b);
+		minute_color = pixels.Color(r - r * DECREASE_PERCENT_1, g - g * DECREASE_PERCENT_1, b - b * DECREASE_PERCENT_1);
+		seconde_color = pixels.Color(r - r * DECREASE_PERCENT_2, g - g * DECREASE_PERCENT_2, b - b * DECREASE_PERCENT_2);
 #ifdef DEBUG
 		Serial.print("Value: ");
 		Serial.print(bright);

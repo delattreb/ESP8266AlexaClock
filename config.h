@@ -28,6 +28,8 @@
 #define LED_COUNT 60
 #define BRIGHTNESS 70
 #define INCREMENT 10
+#define DECREASE_PERCENT_1 0.5
+#define DECREASE_PERCENT_2 0.95
 #pragma endregion
 
 //Save Data
