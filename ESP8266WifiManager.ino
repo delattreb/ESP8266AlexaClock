@@ -12,7 +12,7 @@ WiFiClient wifiClient;
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, NTP_URL, NTP_DECALLAGE, NTP_MAJ);
 GButton touch(PIN_BUTTON_1, LOW_PULL, NORM_OPEN);
-Adafruit_NeoPixel pixels(LED_COUNT_60, LED_PIN_60, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel pixels(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 
 #pragma region ALEXA
 //callback functions
@@ -22,12 +22,11 @@ EspalexaDevice *epsilon;
 #pragma endregion
 
 #pragma region TIME
-bool bbright, bseconde, bsummer;
-int bright;
-int hour, minute, seconde, dayweek, daymonth, month;
-unsigned long epochTime;
-int coefh = LED_COUNT_60 / HOUR;
-float coefm = (float)coefh / (float)LED_COUNT_60;
+static bool bbright, bseconde, bsummer;
+static int bright, hour, minute, seconde, dayweek, daymonth, month;
+static unsigned long epochTime;
+const int coefh = LED_COUNT / HOUR;
+const float coefm = (float)coefh / (float)LED_COUNT;
 #pragma endregion
 
 #pragma region COLOR
@@ -111,18 +110,13 @@ void setup()
 	Serial.print("Mois: ");
 	Serial.println(month);
 	Serial.print("Heure: ");
-	Serial.println(timeClient.getHours());
+	Serial.println(timeClient.getHours()+int(bsummer));
 	Serial.print("Ete: ");
 	Serial.println(bsummer);
 #endif
 
 	pixels.begin();
 	pixels.clear();
-	pixels.setPixelColor(hour, hour_color);
-	pixels.setPixelColor(minute, minute_color);
-	pixels.setPixelColor(seconde, seconde_color);
-	pixels.setBrightness(bright);
-	pixels.show();
 
 	// Define your devices here.
 	espalexa.addDevice(DEVICE_NAME, deltaChanged, EspalexaDeviceType::color);
@@ -146,9 +140,7 @@ void loop()
 			offws(hour);
 			offws(minute);
 			minute = timeClient.getMinutes();
-			hour = round(timeClient.getHours() % 12 * coefh + minute * coefm);
-			if (bsummer)
-				hour += 1;
+			hour = round((timeClient.getHours()+int(bsummer)) % 12 * coefh + minute * coefm);
 		}
 		offws(seconde);
 		seconde = timeClient.getSeconds();

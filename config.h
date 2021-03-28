@@ -23,17 +23,14 @@
 
 //Led configuration
 #pragma region LED_CONFIGURATION
-#define LED_PIN_60 4 
+#define LED_PIN 4 
 #define PIN_BUTTON_1 14
-#define LED_COUNT_60 60
+#define LED_COUNT 60
 #define BRIGHTNESS 70
 #define INCREMENT 10
 #pragma endregion
 
-//Color
-#pragma region LED_COLOR
-#pragma endregion
-
+//Save Data
 #pragma region SAVE_DATA
 #define EEPROM_SIZE 1
 #define EEPROM_PLACE_BRIGHT 0
