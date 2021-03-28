@@ -1,7 +1,7 @@
 //DEBUG INFORMATION
-#define SERIALLOG
+//#define SERIALLOG
 //#define INFO
-#define DEBUG
+//#define DEBUG
 //#define WIFIDEBUG
 
 // Serial configuration
@@ -12,7 +12,6 @@
 #define ATTENPTING 1000
 #define DEBOUNCE 80
 #define TIMEOUT 200
-
 
 //Alexa
 #define DEVICE_NAME "Horloge"
@@ -26,11 +25,13 @@
 #pragma region LED_CONFIGURATION
 #define LED_PIN_60 4 
 #define PIN_BUTTON_1 14
-
 #define LED_COUNT_60 60
 #define BRIGHTNESS 70
-
 #define INCREMENT 10
+#pragma endregion
+
+//Color
+#pragma region LED_COLOR
 #pragma endregion
 
 #pragma region SAVE_DATA

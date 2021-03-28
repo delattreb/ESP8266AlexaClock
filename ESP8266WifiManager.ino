@@ -251,5 +251,14 @@ void deltaChanged(EspalexaDevice *d)
 // isSummer
 bool isSummer(int dayweek, int daymonth, int month, int hour)
 {
-	return true;
+	if (month < 3 || month > 11)
+		return false;
+	if (month > 3 && month < 11)
+		return true;
+	//In march, we are DST if our previous sunday was on or after the 8th.
+	if (month == 3)
+		return (daymonth - dayweek) >= 8;
+	//In november we must be before the first sunday to be dst.
+	//That means the previous sunday must be before the 1st.
+	return (daymonth - dayweek) <= 0;
 }
