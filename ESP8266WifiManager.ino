@@ -22,9 +22,10 @@ EspalexaDevice *epsilon;
 #pragma endregion
 
 #pragma region TIME
-bool bbright, bseconde;
+bool bbright, bseconde, bsummer;
 int bright;
-int hour, minute, seconde;
+int hour, minute, seconde, dayweek, daymonth, month;
+unsigned long epochTime;
 int coefh = LED_COUNT_60 / HOUR;
 float coefm = (float)coefh / (float)LED_COUNT_60;
 #pragma endregion
@@ -34,7 +35,6 @@ uint32_t seconde_color = pixels.Color(0, 0, 128);
 uint32_t minute_color = pixels.Color(0, 255, 255);
 uint32_t hour_color = pixels.Color(255, 48, 0);
 #pragma endregion
-
 
 // setup
 void setup()
@@ -82,6 +82,7 @@ void setup()
 	touch.setTimeout(TIMEOUT);
 	bbright = false;
 	bseconde = true;
+	bsummer = false;
 	if (EEPROM.read(EEPROM_PLACE_BRIGHT) >= 10)
 	{
 		bright = EEPROM.read(EEPROM_PLACE_BRIGHT);
@@ -95,12 +96,25 @@ void setup()
 		bright = BRIGHTNESS;
 
 	timeClient.begin(); // Démarrage du client NTP - Start NTP client
-
-	//Get time
 	timeClient.update();
-	minute = uint8_t(timeClient.getMinutes());
-	hour = round(timeClient.getHours() % 12 * coefh + minute * coefm);
-	seconde = uint8_t(timeClient.getSeconds());
+	epochTime = timeClient.getEpochTime();
+	struct tm *ptm = gmtime((time_t *)&epochTime);
+	dayweek = timeClient.getDay();
+	daymonth = ptm->tm_mday;
+	month = ptm->tm_mon + 1;
+	bsummer = isSummer(dayweek, daymonth, month, timeClient.getHours());
+#ifdef DEBUG
+	Serial.print("JourSemaine: ");
+	Serial.println(dayweek);
+	Serial.print("JourMois: ");
+	Serial.println(daymonth);
+	Serial.print("Mois: ");
+	Serial.println(month);
+	Serial.print("Heure: ");
+	Serial.println(timeClient.getHours());
+	Serial.print("Ete: ");
+	Serial.println(bsummer);
+#endif
 
 	pixels.begin();
 	pixels.clear();
@@ -133,6 +147,8 @@ void loop()
 			offws(minute);
 			minute = timeClient.getMinutes();
 			hour = round(timeClient.getHours() % 12 * coefh + minute * coefm);
+			if (bsummer)
+				hour += 1;
 		}
 		offws(seconde);
 		seconde = timeClient.getSeconds();
@@ -223,11 +239,26 @@ void deltaChanged(EspalexaDevice *d)
 		Serial.print("Value: ");
 		Serial.print(bright);
 		Serial.print(", color R");
-		Serial.print(red);
+		Serial.print(d->getR());
 		Serial.print(", G");
-		Serial.print(green);
+		Serial.print(d->getG());
 		Serial.print(", B");
-		Serial.println(blue);
+		Serial.println(d->getB());
 #endif
 	}
+}
+
+// isSummer
+bool isSummer(int dayweek, int daymonth, int month, int hour)
+{
+	if (month < 3 || month > 11)
+		return false;
+	if (month > 3 && month < 11)
+		return true;
+	//In march, we are DST if our previous sunday was on or after the 8th.
+	if (month == 3)
+		return (daymonth - dayweek) >= 8;
+	//In november we must be before the first sunday to be dst.
+	//That means the previous sunday must be before the 1st.
+	return (daymonth - dayweek) <= 0;
 }
