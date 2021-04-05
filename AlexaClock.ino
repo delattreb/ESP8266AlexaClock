@@ -22,7 +22,7 @@ EspalexaDevice *epsilon;
 #pragma endregion
 
 #pragma region TIME
-static bool bbright, bseconde, bsummer;
+static bool bbright, bseconde, bsummer, btime;
 static int bright, hour, minute, seconde, dayweek, daymonth, month;
 static unsigned long epochTime;
 const int coefh = LED_COUNT / HOUR;
@@ -127,25 +127,25 @@ void setup()
 void loop()
 {
 	touch.tick();
-	timeClient.update();
+	btime = timeClient.update();
 
 	//Alexa
 	espalexa.loop();
 	delay(1);
-
-	if (timeClient.getSeconds() != seconde)
-	{
-		if (timeClient.getMinutes() != minute)
+	if (btime)
+		if (timeClient.getSeconds() != seconde)
 		{
-			offws(hour);
-			offws(minute);
-			minute = timeClient.getMinutes();
-			hour = round((timeClient.getHours() + int(bsummer)) % 12 * coefh + minute * coefm);
+			if (timeClient.getMinutes() != minute)
+			{
+				offws(hour);
+				offws(minute);
+				minute = timeClient.getMinutes();
+				hour = round((timeClient.getHours() + int(bsummer)) % 12 * coefh + minute * coefm);
+			}
+			offws(seconde);
+			seconde = timeClient.getSeconds();
+			changews(hour, minute, seconde, bright);
 		}
-		offws(seconde);
-		seconde = timeClient.getSeconds();
-		changews(hour, minute, seconde, bright);
-	}
 
 	//Button gesture
 	touch.tick();
